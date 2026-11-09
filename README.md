@@ -18,7 +18,7 @@ HTML/CSS/JS pur : aucune dépendance, aucun build.
 |---|---|
 | **Classique** | Propose un combattant et compare ses attributs (genre, espèce, série, éditeur, 1er Smash, année de 1re apparition) à ceux de la cible. Vert = identique, orange = proche, ▲▼ = plus récent ou plus ancien. |
 | **Énigme** | Les attributs de la cible se dévoilent un par un à chaque erreur. 8 essais max. |
-| **Emoji** | 4 emojis, du plus obscur au plus évident, révélés à chaque erreur. 7 essais max. |
+| **Emoji** | 4 emojis tirés au hasard dans une réserve de 7 à 10 par combattant, révélés un par un à chaque erreur. La combinaison et l'ordre changent à chaque partie. 7 essais max. |
 | **Silhouette** | Une silhouette noire très zoomée qui se dézoome à chaque erreur. 6 essais max. Utilise **tes propres images** (voir plus bas). |
 | **Chrono** | Le plus de combattants possible en 3 minutes. Passer coûte 15 s. |
 | **Survie** | Une réserve de 20 essais pour toute la partie, +5 par combattant trouvé. |

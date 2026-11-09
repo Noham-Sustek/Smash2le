@@ -471,6 +471,8 @@ const Emoji = {
   maxGuesses: 7,
   start() {
     this.target = nextTarget();
+    // 4 emojis tirés au hasard dans la réserve du combattant, dans un ordre aléatoire
+    this.emojis = shuffle([...this.target.emoji]).slice(0, 4);
     this.guesses = [];
     this.over = false;
     this.render();
@@ -488,7 +490,7 @@ const Emoji = {
     game.append(el("p", "prompt", "Quel combattant ces emojis décrivent-ils ?"));
     const row = el("div", "emojis");
     const shown = this.over ? 4 : this.revealed();
-    this.target.emoji.forEach((e, i) => {
+    this.emojis.forEach((e, i) => {
       row.append(i < shown ? el("div", "emoji-slot on", e) : el("div", "emoji-slot off", "?"));
     });
     game.append(row);
@@ -854,7 +856,7 @@ const HELP = `<h2>Comment jouer</h2>
   <li>🟥 <b>Rouge</b> : différent. ▲ = la cible est plus récente, ▼ = plus ancienne.</li>
 </ul>
 <h3>Énigme</h3><p>Pas de comparaison : les attributs de la cible se dévoilent un par un à chaque erreur. 8 essais max.</p>
-<h3>Emoji</h3><p>4 emojis, du plus obscur au plus évident, révélés à chaque erreur. 7 essais max.</p>
+<h3>Emoji</h3><p>4 emojis tirés au hasard dans une réserve de 7 à 10 par combattant, révélés un par un à chaque erreur. La combinaison et l'ordre changent à chaque partie. 7 essais max.</p>
 <h3>Silhouette</h3><p>Une silhouette noire très zoomée qui se dézoome à chaque erreur. 6 essais max (5 en Hardcore, avec l'image parfois retournée). Ce mode utilise tes propres images, à déposer dans <code>img/fighters/</code>.</p>
 <h3>Chrono</h3><p>Le plus de combattants possible en 3 minutes. Passer coûte 15 secondes.</p>
 <h3>Survie</h3><p>Une réserve de 20 essais pour toute la partie, +5 par combattant trouvé.</p>
