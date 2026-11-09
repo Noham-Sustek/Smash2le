@@ -72,15 +72,48 @@ function pool() {
 // Sac mélangé : on voit tout le pool avant de revoir un combattant.
 let bag = [];
 let lastTarget = null;
-function nextTarget() {
-  const p = pool();
-  bag = bag.filter((f) => p.includes(f));
+const bags = {};
+function nextTarget(key = "main", p = pool()) {
+  let bag = (bags[key] || []).filter((f) => p.includes(f));
   if (!bag.length) {
     bag = shuffle([...p]);
     if (bag.length > 1 && bag[bag.length - 1] === lastTarget) bag.unshift(bag.pop());
   }
   lastTarget = bag.pop();
+  bags[key] = bag;
   return lastTarget;
+}
+
+/* =========================================================
+   Images fournies par l'utilisateur (mode Silhouette)
+   img/fighters/<nom>.png  (nom = nom du combattant en minuscules, sans accents ni espaces)
+   ========================================================= */
+const IMG_DIR = "img/fighters/";
+const IMG_EXTS = ["png", "webp", "jpg", "jpeg"];
+const imageSrc = new Map();
+let imagesProbe = null;
+
+const imgSlug = (s) => norm(s);
+const canLoad = (src) => new Promise((resolve) => {
+  const i = new Image();
+  i.onload = () => resolve(true);
+  i.onerror = () => resolve(false);
+  i.src = src;
+});
+function probeImages(force = false) {
+  if (imagesProbe && !force) return imagesProbe;
+  imageSrc.clear();
+  const bust = force ? `?t=${Date.now()}` : "";
+  imagesProbe = Promise.all(FIGHTERS.map(async (f) => {
+    const bases = [...new Set([f.name, ...f.aliases.slice(0, 2)].map(imgSlug))];
+    for (const base of bases) {
+      for (const ext of IMG_EXTS) {
+        const src = `${IMG_DIR}${base}.${ext}`;
+        if (await canLoad(src + bust)) { imageSrc.set(f.id, src + bust); return; }
+      }
+    }
+  }));
+  return imagesProbe;
 }
 
 /* =========================================================
@@ -666,7 +699,114 @@ const Survival = {
   },
 };
 
-const MODES = { classic: Classic, enigme: Enigme, emoji: Emoji, timeattack: TimeAttack, survival: Survival };
+/* ---------- Silhouette : image noircie, zoomée, qui se dézoome à chaque erreur ---------- */
+const ZOOMS = [3.4, 2.6, 2, 1.55, 1.2, 1];
+const Silhouette = {
+  id: "silhouette",
+  start() {
+    this.phase = "loading";
+    this.render();
+    probeImages().then(() => { if (current === this) this.afterProbe(); });
+  },
+  afterProbe() {
+    this.list = pool().filter((f) => imageSrc.has(f.id));
+    if (!this.list.length) { this.phase = "empty"; this.render(); }
+    else this.newRound();
+  },
+  newRound() {
+    this.list = pool().filter((f) => imageSrc.has(f.id));
+    if (!this.list.length) { this.phase = "empty"; return this.render(); }
+    this.phase = "play";
+    this.target = nextTarget("silhouette", this.list);
+    this.guesses = [];
+    this.over = false;
+    this.hardcore = settings.hardcore;
+    this.max = this.hardcore ? 5 : 6;
+    this.focus = `${25 + Math.random() * 50}% ${20 + Math.random() * 45}%`;
+    this.mirror = this.hardcore && Math.random() < 0.5;
+    this.prevZoom = ZOOMS[0];
+    this.render();
+  },
+  zoom() {
+    if (this.over) return 1;
+    return ZOOMS[Math.min(ZOOMS.length - 1, this.guesses.length)];
+  },
+  render() {
+    onEnter = null;
+    game.innerHTML = "";
+    if (this.phase === "loading") {
+      game.append(el("div", "start-screen", `<div class="big">🔍</div><p>Recherche des images…</p>`));
+      return;
+    }
+    if (this.phase === "empty") {
+      const sample = FIGHTERS.slice(0, 6).map((f) => `<code>${imgSlug(f.name)}.png</code>`).join(", ");
+      const box = el("div", "start-screen", `<div class="big">👤</div><h2>Aucune image trouvée</h2>
+        <p>Le mode Silhouette utilise tes propres images. Dépose-les dans le dossier
+        <code>img/fighters/</code> du projet, une par combattant, nommées d'après son nom en minuscules,
+        sans accents ni espaces : ${sample}…</p>
+        <p>Formats acceptés : PNG, WebP, JPG. Prends des <b>PNG à fond transparent</b> pour une vraie silhouette.
+        La liste complète des noms de fichiers est dans <code>img/fighters/LISEZMOI.md</code>.</p>
+        <p>Seuls les combattants qui ont une image (et qui sont dans ton pool) peuvent tomber.</p>`);
+      const b = el("button", "btn gold", "Rechercher à nouveau");
+      b.addEventListener("click", () => { this.phase = "loading"; this.render(); probeImages(true).then(() => { if (current === this) this.afterProbe(); }); });
+      box.append(b);
+      game.append(box);
+      return;
+    }
+    const s = modeStats("silhouette");
+    game.append(hud([
+      ["Essais", `${this.guesses.length} / ${this.max}`],
+      ["Série", s.streak, "hot"],
+      ["Record", s.best],
+      ["Images", `${this.list.length}`],
+      ...(this.hardcore ? [["Mode", "Hardcore", "danger"]] : []),
+    ]));
+    game.append(el("p", "prompt", this.over ? "" : "À qui appartient cette silhouette ?"));
+
+    const stage = el("div", `sil-stage ${this.over ? "revealed" : ""}`);
+    const img = el("img", `sil-img ${this.over ? "" : "dark"}`);
+    img.alt = "Silhouette mystère";
+    img.draggable = false;
+    img.src = imageSrc.get(this.target.id);
+    img.style.transformOrigin = this.focus;
+    const flip = this.mirror && !this.over ? " scaleX(-1)" : "";
+    img.style.transform = `scale(${this.prevZoom})${flip}`;
+    stage.append(img);
+    game.append(stage);
+    const z = this.zoom();
+    requestAnimationFrame(() => requestAnimationFrame(() => { img.style.transform = `scale(${z})${flip}`; }));
+    this.prevZoom = z;
+
+    if (this.over) {
+      const won = this.won;
+      game.append(resultPanel({
+        won, target: this.target,
+        lines: won ? [`Trouvé en <b>${this.guesses.length}</b> essai${this.guesses.length > 1 ? "s" : ""}.`] : [],
+        actions: [{ label: "Silhouette suivante", cls: "btn gold", kbd: "Entrée", onClick: () => this.newRound() }],
+      }));
+      onEnter = () => this.newRound();
+    } else {
+      const input = makeGuessInput({ exclude: () => new Set(this.guesses.map((g) => g.id)), onPick: (f) => this.guess(f) });
+      game.append(input.node);
+      input.focus();
+    }
+    game.append(wrongList(this.guesses.filter((g) => g !== this.target)));
+  },
+  guess(f) {
+    this.guesses.push(f);
+    if (f === this.target) return this.finish(true);
+    if (this.guesses.length >= this.max) return this.finish(false);
+    this.render();
+  },
+  finish(won) {
+    this.over = true;
+    this.won = won;
+    recordRound("silhouette", won, this.guesses.length);
+    this.render();
+  },
+};
+
+const MODES = { classic: Classic, enigme: Enigme, emoji: Emoji, silhouette: Silhouette, timeattack: TimeAttack, survival: Survival };
 
 function switchMode(id) {
   if (current && current.leave) current.leave();
@@ -704,6 +844,7 @@ const HELP = `<h2>Comment jouer</h2>
 </ul>
 <h3>Énigme</h3><p>Pas de comparaison : les attributs de la cible se dévoilent un par un à chaque erreur. 8 essais max.</p>
 <h3>Emoji</h3><p>4 emojis, du plus obscur au plus évident, révélés à chaque erreur. 7 essais max.</p>
+<h3>Silhouette</h3><p>Une silhouette noire très zoomée qui se dézoome à chaque erreur. 6 essais max (5 en Hardcore, avec l'image parfois retournée). Ce mode utilise tes propres images, à déposer dans <code>img/fighters/</code>.</p>
 <h3>Chrono</h3><p>Le plus de combattants possible en 3 minutes. Passer coûte 15 secondes.</p>
 <h3>Survie</h3><p>Une réserve de 20 essais pour toute la partie, +5 par combattant trouvé.</p>
 <h3>Hardcore</h3><p>Dans les réglages : plus d'orange ni de flèches, et 6 essais max en Classique. S'applique aussi à Chrono et Survie.</p>
@@ -726,7 +867,7 @@ function statsHtml() {
   const score = (id, title) => `<h3>${title}</h3><div class="stat-grid">
     <div><b>${modeStats(id).played}</b><small>Parties</small></div>
     <div><b>${modeStats(id).highScore}</b><small>Record</small></div></div>`;
-  return `<h2>Statistiques</h2>${block("classic", "Classique")}${block("enigme", "Énigme")}${block("emoji", "Emoji")}
+  return `<h2>Statistiques</h2>${block("classic", "Classique")}${block("enigme", "Énigme")}${block("emoji", "Emoji")}${block("silhouette", "Silhouette")}
     ${score("timeattack", "Chrono")}${score("survival", "Survie")}
     <p style="margin-top:18px"><button class="btn ghost" id="reset-stats">Réinitialiser les stats</button></p>`;
 }

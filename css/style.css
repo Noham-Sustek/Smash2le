@@ -71,7 +71,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   width: min(1000px, 100%);
   padding: 8px 16px;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
 }
 .modes button {
@@ -453,3 +453,27 @@ main {
 .dist-bar { background: var(--accent); border-radius: 4px; padding: 2px 6px; min-width: 22px; text-align: right; font-weight: 700; }
 
 .foot { color: #5d6390; font-size: .75rem; padding: 16px; text-align: center; }
+
+/* ---------- Silhouette ---------- */
+.sil-stage {
+  width: min(360px, 100%);
+  aspect-ratio: 1;
+  margin: 0 auto 18px;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 2px solid var(--line);
+  background:
+    radial-gradient(circle at 50% 40%, #ffffff 0%, #d9dcf2 70%, #b9bde0 100%);
+  user-select: none;
+}
+.sil-stage.revealed { border-color: var(--accent2); }
+.sil-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  transition: transform .7s cubic-bezier(.2, .8, .2, 1), filter .9s ease;
+  pointer-events: none;
+}
+.sil-img.dark { filter: brightness(0); }
+code { background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; font-size: .85em; color: var(--accent2); }

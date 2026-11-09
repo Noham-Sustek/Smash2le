@@ -19,6 +19,7 @@ HTML/CSS/JS pur : aucune dépendance, aucun build.
 | **Classique** | Propose un combattant et compare ses attributs (genre, espèce, série, éditeur, 1er Smash, année de 1re apparition) à ceux de la cible. Vert = identique, orange = proche, ▲▼ = plus récent ou plus ancien. |
 | **Énigme** | Les attributs de la cible se dévoilent un par un à chaque erreur. 8 essais max. |
 | **Emoji** | 4 emojis, du plus obscur au plus évident, révélés à chaque erreur. 7 essais max. |
+| **Silhouette** | Une silhouette noire très zoomée qui se dézoome à chaque erreur. 6 essais max. Utilise **tes propres images** (voir plus bas). |
 | **Chrono** | Le plus de combattants possible en 3 minutes. Passer coûte 15 s. |
 | **Survie** | Une réserve de 20 essais pour toute la partie, +5 par combattant trouvé. |
 
@@ -26,6 +27,16 @@ HTML/CSS/JS pur : aucune dépendance, aucun build.
 (combattants introduits dans 64 / Melee / Brawl / 3DS-Wii U / Ultimate, Nintendo ou tiers uniquement).
 
 Les stats (séries, records, distribution des essais) sont gardées dans le `localStorage` du navigateur.
+
+## Images pour le mode Silhouette
+
+Le dépôt ne contient aucune image officielle. Dépose les tiennes dans `img/fighters/`
+(ce dossier est ignoré par git), une par combattant, nommée d'après son nom en minuscules, sans accents ni espaces :
+`mario.png`, `donkeykong.png`, `samussombre.png`… Le nom anglais marche aussi (`darksamus.png`).
+La liste complète est dans [`img/fighters/LISEZMOI.md`](img/fighters/LISEZMOI.md).
+
+- Prends des **PNG à fond transparent** (les renders officiels par exemple) : le jeu les noircit pour faire la silhouette.
+- Tu n'es pas obligé de tout remplir : seuls les combattants qui ont une image tombent dans ce mode.
 
 ## Données
 
