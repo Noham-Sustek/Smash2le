@@ -20,9 +20,20 @@ function initials(name) {
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
   return (words[0][0] + words[1][0]).toUpperCase();
 }
+// Logos de séries : img/series/<série>.png (facultatifs, chargés au démarrage)
+const seriesSrc = new Map();
+function emblem(series, cls = "emblem") {
+  const src = seriesSrc.get(series);
+  return src ? `<img class="${cls}" src="${src}" alt="" title="${esc(series)}">` : "";
+}
 function badge(f) {
   const h = hashHue(f.series);
-  return `<span class="badge" style="background:linear-gradient(135deg,hsl(${h} 65% 45%),hsl(${(h + 40) % 360} 70% 30%))">${esc(initials(f.name))}</span>`;
+  const inner = emblem(f.series, "badge-emblem") || esc(initials(f.name));
+  return `<span class="badge" style="background:linear-gradient(135deg,hsl(${h} 65% 45%),hsl(${(h + 40) % 360} 70% 30%))">${inner}</span>`;
+}
+function valueHtml(f, key) {
+  const text = `<span>${esc(displayValue(f, key))}</span>`;
+  return key === "series" ? emblem(f.series, "value-emblem") + text : text;
 }
 
 const store = {
@@ -267,7 +278,7 @@ function classicGrid(guesses, target, hardcore) {
     COLUMNS.forEach((c, i) => {
       const dir = c.key === "smash" ? res.smashDir : c.key === "year" ? res.yearDir : "";
       const arrow = dir ? `<span class="arrow ${dir}"></span>` : "";
-      const cell = el("div", `cell ${res[c.key]}`, `<div class="cell-inner"><span>${esc(displayValue(g, c.key))}</span>${arrow}</div>`);
+      const cell = el("div", `cell ${res[c.key]}`, `<div class="cell-inner">${valueHtml(g, c.key)}${arrow}</div>`);
       if (fresh) cell.style.animationDelay = `${(i + 1) * 0.12}s`;
       else cell.style.animation = "none";
       row.append(cell);
@@ -422,7 +433,7 @@ const Enigme = {
       const on = i < shown;
       const fresh = !this.over && i === shown - 1;
       clues.append(el("div", `clue ${on ? (fresh ? "revealed" : "") : "hidden"}`,
-        `<small>${c.label}</small><b>${on ? esc(displayValue(this.target, c.key)) : "???"}</b>`));
+        `<small>${c.label}</small><b>${on ? valueHtml(this.target, c.key) : "???"}</b>`));
     });
     game.append(clues);
     if (this.over) {
@@ -700,7 +711,7 @@ const Survival = {
 };
 
 /* ---------- Silhouette : image noircie, zoomée, qui se dézoome à chaque erreur ---------- */
-const ZOOMS = [3.4, 2.6, 2, 1.55, 1.2, 1];
+const ZOOMS = [2.5, 2.05, 1.7, 1.4, 1.15, 1];
 const Silhouette = {
   id: "silhouette",
   start() {
@@ -925,5 +936,12 @@ document.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("clic
 }));
 
 /* ---------- Lancement ---------- */
-switchMode(store.get("smash2le-mode", "classic"));
+function probeSeries() {
+  const all = [...new Set(FIGHTERS.map((f) => f.series))];
+  return Promise.all(all.map(async (s) => {
+    const src = `img/series/${imgSlug(s)}.png`;
+    if (await canLoad(src)) seriesSrc.set(s, src);
+  }));
+}
+probeSeries().then(() => switchMode(store.get("smash2le-mode", "classic")));
 if (!store.get("smash2le-seen-help", false)) { store.set("smash2le-seen-help", true); openModal(HELP); }

@@ -477,3 +477,11 @@ main {
 }
 .sil-img.dark { filter: brightness(0); }
 code { background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; font-size: .85em; color: var(--accent2); }
+
+/* ---------- Logos de séries ---------- */
+.badge-emblem { width: 72%; height: 72%; object-fit: contain; filter: invert(1) drop-shadow(0 1px 1px #0006); }
+.value-emblem { width: 26px; height: 26px; object-fit: contain; filter: invert(1); margin-bottom: 3px; }
+.cell.partial .value-emblem { filter: none; opacity: .8; }
+.cell-inner { gap: 1px; }
+.clue b { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.clue .value-emblem { width: 34px; height: 34px; }

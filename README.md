@@ -38,6 +38,14 @@ La liste complète est dans [`img/fighters/LISEZMOI.md`](img/fighters/LISEZMOI.m
 - Prends des **PNG à fond transparent** (les renders officiels par exemple) : le jeu les noircit pour faire la silhouette.
 - Tu n'es pas obligé de tout remplir : seuls les combattants qui ont une image tombent dans ce mode.
 
+## Logos de séries (facultatif)
+
+Dépose les emblèmes dans `img/series/` (ignoré par git aussi), nommés d'après la série en minuscules,
+sans accents ni ponctuation : `supermario.png`, `zelda.png`, `pokemon.png`, `fireemblem.png`, `punchout.png`…
+Prends des PNG noirs à fond transparent (le style des emblèmes officiels) : le jeu les passe en blanc.
+Ils remplacent les initiales dans les pastilles et apparaissent dans la colonne « Série » et dans l'indice Série de l'Énigme.
+Sans ces fichiers, le jeu affiche simplement le texte.
+
 ## Données
 
 Tout est dans `js/data.js` : 84 entrées (roster d'Ultimate, les trois Mii regroupés en un seul).
